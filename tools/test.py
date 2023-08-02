@@ -12,11 +12,6 @@ from mmengine.runner import Runner
 from mmrotate.utils import register_all_modules
 
 
-"""
-python test.py --cfg-options outfile_prefix=/mnt/Dota1.0/out/offline_labelTxt
-"""
-
-
 # TODO: support fuse_conv_bn and format_only
 def parse_args():
     parser = argparse.ArgumentParser(description='Test (and eval) a model')
@@ -27,26 +22,21 @@ def parse_args():
         help='the directory to save the file containing evaluation metrics')
     parser.add_argument('--out', default='/mnt/Dota1.0/test/out/res.pkl', type=str,
         help='dump predictions to a pickle file for offline evaluation')
-    # https://blog.csdn.net/qq_45708837/article/details/128383032
-    # https://bbs.huaweicloud.com/blogs/324756
-    # 检测整个测试集时此参数不要设置，此参数会一张一张的显示图片
-    parser.add_argument('--show', action='store_true', help='show prediction results')
     # 此参数会将原图与绘制过标注信息的图合并成一张图然后保存在指定目录中
     parser.add_argument('--show-dir', default='/mnt/Dota1.0/test/show_dir/',
-        help='directory where painted images will be saved.If specified, it will be automatically saved to the work_dir/timestamp/show_dir')
+                        help='directory where painted images will be saved.If specified, it will be automatically saved to the work_dir/timestamp/show_dir')
 
-    """并生成txt和png文件提交给官方评估服务器
-        python test.py configs/rotated_rtmdet/rotated_rtmdet_s-3x-dota.py
-        --format-only  --cfg-options outfile_prefix=/mnt/Dota1.0/out/offline_labelTxt"
-        生成的png和txt将在./mask_rcnn_cityscapes_test_results目录下"""
-    # 此处内容在configs/rotated_rtmdet/_base_/dota_rr.py文件中已经设置，
-    # 当换数据集试验时再设置此处内容
-    # parser.add_argument('--format-only', action='store_true',
-    #     default=True,
-    #     help='Format the output results without perform evaluation. It is'
-    #     'useful when you want to format the result to a specific format and '
-    #     'submit it to the test server')
+    # parser.add_argument('--config', default='/root/mmrotate/configs/rotated_rtmdet/rotated_rtmdet_l-100e-aug-dior.py', help='test config file path')
+    # parser.add_argument('--checkpoint', default='/mnt/Dior/trainval/work_dir/epoch_100.pth', help='checkpoint file')
+    # parser.add_argument('--work-dir', default='/mnt/Dior/test/work_dir/',
+    #     help='the directory to save the file containing evaluation metrics')
+    # parser.add_argument('--out', default='/mnt/Dior/test/out/res.pkl', type=str,
+    #     help='dump predictions to a pickle file for offline evaluation')
+    # # 此参数会将原图与绘制过标注信息的图合并成一张图然后保存在指定目录中
+    # parser.add_argument('--show-dir', default='/mnt/Dior/test/show_dir/',
+    #                     help='directory where painted images will be saved.If specified, it will be automatically saved to the work_dir/timestamp/show_dir')
 
+    parser.add_argument('--show', action='store_true', help='show prediction results')
     parser.add_argument('--cfg-options', nargs='+', action=DictAction,
         help='override some settings in the used config, the key-value pair '
         'in xxx=yyy format will be merged into config file. If the value to '

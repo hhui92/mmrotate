@@ -1,5 +1,5 @@
 {
-  "nproc": 1,
+  "nproc": 10,
   "img_dirs": [
     "D:\\WorkSpace\\NerualNet\\dataset\\FAIR1M1.0\\train\\part2\\images\\"
   ],

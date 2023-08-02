@@ -208,8 +208,7 @@ def eval_rbbox_map(det_results,
     eval_results = []
     for i in range(num_classes):
         # get gt and det bboxes of this class
-        cls_dets, cls_gts, cls_gts_ignore = get_cls_results(
-            det_results, annotations, i, box_type)
+        cls_dets, cls_gts, cls_gts_ignore = get_cls_results(det_results, annotations, i, box_type)
 
         # compute tp and fp for each image with multiple processes
         tpfp = pool.starmap(

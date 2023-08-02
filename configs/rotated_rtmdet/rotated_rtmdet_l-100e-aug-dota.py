@@ -5,7 +5,7 @@ _base_ = [
 ]
 
 backend_args = None
-checkpoint = '/mnt/Dota1.0/rotated_rtmdet_l-3x-dota-23992372.pth'  # noqa
+checkpoint = '/mnt/checkpoint/rotated_rtmdet_l-3x-dota-23992372.pth'  # noqa
 
 img_scale = (1024, 1024)
 angle_version = 'le90'
@@ -141,7 +141,7 @@ train_pipeline_stage2 = [
 ]
 
 # batch_size = (2 GPUs) x (4 samples per GPU) = 8
-train_dataloader = dict(batch_size=4, num_workers=2, dataset=dict(pipeline=train_pipeline))
+train_dataloader = dict(batch_size=6, num_workers=2, dataset=dict(pipeline=train_pipeline))
 
 max_epochs = 100
 stage2_num_epochs = 10

@@ -49,7 +49,7 @@ test_pipeline = [
 ]
 train_dataloader = dict(
     batch_size=6,
-    num_workers=2,
+    num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     batch_sampler=None,
@@ -57,8 +57,8 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='trainval/annfiles/',
-        data_prefix=dict(img_path='trainval/images/'),
+        ann_file='train/annfiles/',
+        data_prefix=dict(img_path='train/images/'),
         filter_cfg=dict(filter_empty_gt=True),
         pipeline=train_pipeline))
 val_dataloader = dict(
@@ -70,20 +70,18 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='trainval/annfiles/',
-        data_prefix=dict(img_path='trainval/images/'),
+        ann_file='val/annfiles/',
+        data_prefix=dict(img_path='val/images/'),
         test_mode=True,
         pipeline=val_pipeline))
-# test_dataloader = val_dataloader
 
 val_evaluator = dict(type='DOTAMetric', metric='mAP')
-# test_evaluator = val_evaluator
 
 # inference on test dataset and format the output results
 # for submission. Note: the test set has no annotation.
 test_dataloader = dict(
-    batch_size=4,
-    num_workers=2,
+    batch_size=8,
+    num_workers=8,
     persistent_workers=False,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -91,10 +89,13 @@ test_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         data_prefix=dict(img_path='test/images/'),
+        img_shape=(1024, 1024),
         test_mode=True,
         pipeline=test_pipeline))
+# 该字典中参数type表示使用mmrotate/evaluation/metrics/dota_metric.py，且传递的参数为format_only、merge_patches和outfile_prefix
+# 参数详情请参考dota_metric.py参数介绍
 test_evaluator = dict(
     type='DOTAMetric',
     format_only=True,
     merge_patches=True,
-    outfile_prefix='/mnt/Dota1.0/test/predict/')
+    outfile_prefix='/mnt/Dota1.0/test/predict/task1')

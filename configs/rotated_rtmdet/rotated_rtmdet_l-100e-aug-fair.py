@@ -5,7 +5,7 @@ _base_ = [
 ]
 
 backend_args = None
-checkpoint = '/mnt/Dota1.0/rotated_rtmdet_l-3x-dota-23992372.pth'  # noqa
+checkpoint = '/mnt/checkpoint/rotated_rtmdet_l-3x-dota-23992372.pth'  # noqa
 
 img_scale = (1024, 1024)
 angle_version = 'le90'

@@ -7,7 +7,7 @@ _base_ = [
 
 # 根据标注文件生成的类别名
 
-checkpoint = '/mnt/Dota1.0/rotated_rtmdet_l-3x-dota-23992372.pth'  # noqa
+checkpoint = '/mnt/checkpoint/rotated_rtmdet_l-3x-dota-23992372.pth'  # noqa
 
 backend_args = None
 
@@ -148,7 +148,7 @@ train_pipeline_stage2 = [
 # batch_size = (2 GPUs) x (4 samples per GPU) = 8
 train_dataloader = dict(
     batch_size=8,
-    num_workers=2,
+    num_workers=8,
     dataset=dict(
         # 删除原先字典内容
         # _delete_=True,
