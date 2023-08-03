@@ -29,7 +29,7 @@ except ImportError:
 
 def add_parser(parser):
     """Add arguments."""
-    parser.add_argument('--base-json', type=str, default=r'D:\WorkSpace\NerualNet\program\mmrotate\tools\data\dota\split\split_configs\ss_test.json',
+    parser.add_argument('--base-json', type=str, default=r'D:\WorkSpace\NerualNet\program\mmrotate\tools\data\dota\split\split_configs\ss_train.json',
         help='json config file for split images')
     parser.add_argument('--nproc', type=int, default=2, help='the procession number')
 

@@ -172,7 +172,7 @@ val_pipeline = [
 
 val_dataloader = dict(batch_size=6, num_workers=2, dataset=dict(pipeline=val_pipeline))
 
-test_dataloader = dict(batch_size=6, num_workers=2)
+test_dataloader = dict(batch_size=10, num_workers=8)
 
 val_evaluator = dict(type='DOTAMetric', metric='mAP')
 test_evaluator = dict(type='DOTAMetric', metric='mAP')

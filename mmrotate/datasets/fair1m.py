@@ -48,7 +48,7 @@ class FAIR1MDataset(BaseDataset):
 
     def __init__(self,
                  diff_thr: int = 100,
-                 img_suffix: str = 'tif',
+                 img_suffix: str = 'png',
                  **kwargs) -> None:
         self.diff_thr = diff_thr
         self.img_suffix = img_suffix

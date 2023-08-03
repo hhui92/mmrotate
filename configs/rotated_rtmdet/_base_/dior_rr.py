@@ -32,6 +32,9 @@ val_pipeline = [
 test_pipeline = [
     dict(type='mmdet.LoadImageFromFile', backend_args=backend_args),
     dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
+    # 对于测试集有标注的应加载标注，否则最后计算mAP时会报错
+    dict(type='mmdet.LoadAnnotations', with_bbox=True, box_type='qbox'),
+    dict(type='ConvertBoxType', box_type_mapping=dict(gt_bboxes='rbox')),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'scale_factor')
