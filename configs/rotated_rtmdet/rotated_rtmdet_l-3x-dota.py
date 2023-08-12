@@ -1,9 +1,12 @@
 _base_ = [
-    './_base_/default_runtime.py', './_base_/schedule_3x.py',
+    './_base_/default_runtime.py',
+    './_base_/schedule_3x.py',
     './_base_/dota_rr.py'
 ]
-checkpoint = '/mnt/Dota1.0/cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth'  # noqa
 
+backend_args = None
+checkpoint = '/root/autodl-tmp/checkpoint/rotated_rtmdet_l-3x-dota-23992372.pth'  # noqa
+img_scale = (1024, 1024)
 angle_version = 'le90'
 model = dict(
     type='mmdet.RTMDet',
@@ -75,6 +78,117 @@ model = dict(
         max_per_img=2000),
 )
 
+
+train_pipeline = [
+    dict(type='mmdet.LoadImageFromFile', backend_args=backend_args),
+    dict(type='mmdet.LoadAnnotations', with_bbox=True, box_type='qbox'),
+    dict(type='ConvertBoxType', box_type_mapping=dict(gt_bboxes='rbox')),
+    dict(type='mmdet.CachedMosaic', img_scale=img_scale, pad_val=114.0),
+    dict(
+        type='mmdet.RandomResize',
+        resize_type='mmdet.Resize',
+        scale=(img_scale[0] * 2, img_scale[1] * 2),
+        ratio_range=(0.1, 2.0),
+        keep_ratio=True),
+    dict(
+        type='RandomRotate',
+        prob=0.5,
+        angle_range=180,
+        rect_obj_labels=[9, 11]),
+    dict(type='mmdet.RandomCrop', crop_size=img_scale),
+    dict(type='mmdet.YOLOXHSVRandomAug'),
+    dict(
+        type='mmdet.RandomFlip',
+        prob=0.75,
+        direction=['horizontal', 'vertical', 'diagonal']),
+    dict(
+        type='mmdet.Pad', size=img_scale,
+        pad_val=dict(img=(114, 114, 114))),
+    dict(
+        type='mmdet.CachedMixUp',
+        img_scale=img_scale,
+        ratio_range=(1.0, 1.0),
+        max_cached_images=20,
+        pad_val=(114, 114, 114)),
+    dict(type='mmdet.PackDetInputs')
+]
+
+train_pipeline_stage2 = [
+    dict(type='mmdet.LoadImageFromFile', backend_args=backend_args),
+    dict(type='mmdet.LoadAnnotations', with_bbox=True, box_type='qbox'),
+    dict(type='ConvertBoxType', box_type_mapping=dict(gt_bboxes='rbox')),
+    dict(
+        type='mmdet.RandomResize',
+        resize_type='mmdet.Resize',
+        scale=img_scale,
+        ratio_range=(0.1, 2.0),
+        keep_ratio=True),
+    dict(
+        type='RandomRotate',
+        prob=0.5,
+        angle_range=180,
+        rect_obj_labels=[9, 11]),
+    dict(type='mmdet.RandomCrop', crop_size=img_scale),
+    dict(type='mmdet.YOLOXHSVRandomAug'),
+    dict(
+        type='mmdet.RandomFlip',
+        prob=0.75,
+        direction=['horizontal', 'vertical', 'diagonal']),
+    dict(
+        type='mmdet.Pad', size=img_scale,
+        pad_val=dict(img=(114, 114, 114))),
+    dict(type='mmdet.PackDetInputs')
+]
+
 # batch_size = (2 GPUs) x (4 samples per GPU) = 8
-# 此处会将configs/rotated_rtmdet/_base_/dota_rr.py中train_dataloader的batch_size、num_workers替换
-train_dataloader = dict(batch_size=3, num_workers=2)
+train_dataloader = dict(batch_size=5, num_workers=2, dataset=dict(pipeline=train_pipeline))
+
+max_epochs = 36
+stage2_num_epochs = 10
+base_lr = 0.004 / 16
+interval = 6
+
+train_cfg = dict(max_epochs=max_epochs, val_interval=interval)
+
+# learning rate
+param_scheduler = [
+    dict(
+        type='LinearLR',
+        start_factor=1.0e-5,
+        by_epoch=False,
+        begin=0,
+        end=1000),
+    dict(
+        # use cosine lr from 50 to 100 epoch
+        type='CosineAnnealingLR',
+        eta_min=base_lr * 0.05,
+        begin=max_epochs // 2,
+        end=max_epochs,
+        T_max=max_epochs // 2,
+        by_epoch=True,
+        convert_to_iter_based=True),
+]
+
+default_hooks = dict(
+    timer=dict(type='IterTimerHook'),
+    logger=dict(type='LoggerHook', interval=50), # 训练时日志打印间隔
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    # interval次保存一个模型checkpoint，最多保存3个
+    checkpoint=dict(type='CheckpointHook', interval=interval, max_keep_ckpts=max_epochs // interval),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    visualization=dict(type='mmdet.DetVisualizationHook'))
+
+custom_hooks = [
+    dict(type='mmdet.NumClassCheckHook'),
+    dict(
+        type='EMAHook',
+        ema_type='mmdet.ExpMomentumEMA',
+        momentum=0.0002,
+        update_buffers=True,
+        priority=49),
+    dict(
+        type='mmdet.PipelineSwitchHook',
+        switch_epoch=max_epochs - stage2_num_epochs,
+        switch_pipeline=train_pipeline_stage2)
+]
+

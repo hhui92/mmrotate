@@ -1,5 +1,6 @@
 _base_ = [
-    './_base_/default_runtime.py', './_base_/schedule_3x.py',
+    './_base_/default_runtime.py',
+    './_base_/schedule_3x.py',
     './_base_/dota_rr_ms.py'
 ]
 checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth'  # noqa
@@ -23,8 +24,7 @@ model = dict(
         channel_attention=True,
         norm_cfg=dict(type='SyncBN'),
         act_cfg=dict(type='SiLU'),
-        init_cfg=dict(
-            type='Pretrained', prefix='backbone.', checkpoint=checkpoint)),
+        init_cfg=dict(type='Pretrained', prefix='backbone.', checkpoint=checkpoint)),
     neck=dict(
         type='mmdet.CSPNeXtPAFPN',
         in_channels=[256, 512, 1024],
@@ -40,10 +40,8 @@ model = dict(
         stacked_convs=2,
         feat_channels=256,
         angle_version=angle_version,
-        anchor_generator=dict(
-            type='mmdet.MlvlPointGenerator', offset=0, strides=[8, 16, 32]),
-        bbox_coder=dict(
-            type='DistanceAnglePointCoder', angle_version=angle_version),
+        anchor_generator=dict(type='mmdet.MlvlPointGenerator', offset=0, strides=[8, 16, 32]),
+        bbox_coder=dict(type='DistanceAnglePointCoder', angle_version=angle_version),
         loss_cls=dict(
             type='mmdet.QualityFocalLoss',
             use_sigmoid=True,
@@ -77,3 +75,16 @@ model = dict(
 
 # batch_size = (2 GPUs) x (4 samples per GPU) = 8
 train_dataloader = dict(batch_size=4, num_workers=4)
+max_epochs = 3 * 12
+base_lr = 0.004 / 16
+interval = 4  # 每隔4个epoch验证一次
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=max_epochs, val_interval=interval)
+
+default_hooks = dict(
+    timer=dict(type='IterTimerHook'),
+    logger=dict(type='LoggerHook', interval=50), # 训练时日志打印间隔
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    # interval次保存一个模型checkpoint，最多保存max_epochs // interval个
+    checkpoint=dict(type='CheckpointHook', interval=interval, max_keep_ckpts=max_epochs // interval),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    visualization=dict(type='mmdet.DetVisualizationHook'))

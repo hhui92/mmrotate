@@ -1,7 +1,7 @@
 {
   "nproc": 10,
   "img_dirs": [
-    "D:\\WorkSpace\\NerualNet\\dataset\\FAIR1M2.0\\test\\images0\\images"
+    "D:\\WorkSpace\\NerualNet\\dataset\\DOTA-v1.0\\test\\images\\images\\"
   ],
   "ann_dirs": null,
   "sizes": [
@@ -21,6 +21,6 @@
     116,
     124
   ],
-  "save_dir": "D:\\WorkSpace\\NerualNet\\dataset\\FAIR1M2.0\\test\\split",
+  "save_dir": "D:\\WorkSpace\\NerualNet\\dataset\\DOTA-v1.0\\test\\split",
   "save_ext": ".png"
 }

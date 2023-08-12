@@ -5,7 +5,7 @@ _base_ = [
 ]
 
 backend_args = None
-checkpoint = '/mnt/checkpoint/rotated_rtmdet_l-3x-dota-23992372.pth'  # noqa
+checkpoint = '/root/autodl-tmp/checkpoint/cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth'  # noqa
 
 img_scale = (1024, 1024)
 angle_version = 'le90'
@@ -39,7 +39,7 @@ model = dict(
         act_cfg=dict(type='SiLU')),
     bbox_head=dict(
         type='RotatedRTMDetSepBNHead',
-        num_classes=15,
+        num_classes=37,
         in_channels=256,
         stacked_convs=2,
         feat_channels=256,
@@ -141,12 +141,12 @@ train_pipeline_stage2 = [
 ]
 
 # batch_size = (2 GPUs) x (4 samples per GPU) = 8
-train_dataloader = dict(batch_size=4, num_workers=2, dataset=dict(pipeline=train_pipeline))
+train_dataloader = dict(batch_size=5, num_workers=8, dataset=dict(pipeline=train_pipeline))
 
 max_epochs = 100
 stage2_num_epochs = 10
 base_lr = 0.004 / 16
-interval = 20
+interval = 1
 
 train_cfg = dict(max_epochs=max_epochs, val_interval=interval)
 

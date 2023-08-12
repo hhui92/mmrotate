@@ -1,6 +1,6 @@
-max_epochs = 100
+max_epochs = 3 * 12
 base_lr = 0.004 / 16
-interval = 20  # 每隔12个epoch验证一次
+interval = 12  # 每隔12个epoch验证一次
 
 train_cfg = dict(
     type='EpochBasedTrainLoop', max_epochs=max_epochs, val_interval=interval)

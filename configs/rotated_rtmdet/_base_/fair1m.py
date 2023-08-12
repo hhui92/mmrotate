@@ -1,5 +1,5 @@
 dataset_type = 'FAIR1MDataset'
-data_root = '/mnt/Fair1m/'
+data_root = '/root/autodl-tmp/FAIR1M_ms/'
 
 backend_args = None
 img_scale = (1024, 1024)
@@ -47,7 +47,7 @@ test_pipeline = [
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'scale_factor'))
 ]
 train_dataloader = dict(
-    batch_size=6,
+    batch_size=5,
     num_workers=2,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -56,12 +56,12 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='trainval/annfiles/',
-        data_prefix=dict(img_path='trainval/images/'),
+        ann_file='train/annfiles/',
+        data_prefix=dict(img_path='train/images/'),
         filter_cfg=dict(filter_empty_gt=True),
         pipeline=train_pipeline))
 val_dataloader = dict(
-    batch_size=2,
+    batch_size=6,
     num_workers=2,
     persistent_workers=True,
     drop_last=False,
@@ -69,8 +69,8 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='trainval/annfiles/',
-        data_prefix=dict(img_path='trainval/images/'),
+        ann_file='val/annfiles/',
+        data_prefix=dict(img_path='val/images/'),
         test_mode=True,
         pipeline=val_pipeline))
 # test_dataloader = val_dataloader
@@ -96,4 +96,4 @@ test_evaluator = dict(
     type='DOTAMetric',
     format_only=True,
     merge_patches=True,
-    outfile_prefix='/mnt/Fair1m/test/predict/')
+    outfile_prefix='/root/autodl-tmp/FAIR1M_ms/test/predict/')

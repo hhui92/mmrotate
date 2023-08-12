@@ -1,10 +1,10 @@
 {
   "nproc": 10,
   "img_dirs": [
-    "data/DOTA/val/images/"
+    "D:\\WorkSpace\\NerualNet\\dataset\\DOTA-v1.0\\val\\images\\"
   ],
   "ann_dirs": [
-    "data/DOTA/val/labelTxt/"
+    "D:\\WorkSpace\\NerualNet\\dataset\\DOTA-v1.0\\val\\annfiles\\"
   ],
   "sizes": [
     1024
@@ -23,6 +23,6 @@
     116,
     124
   ],
-  "save_dir": "data/split_ss_dota/val/",
+  "save_dir": "D:\\WorkSpace\\NerualNet\\dataset\\DOTA-v1.0\\val\\split\\",
   "save_ext": ".png"
 }

@@ -7,7 +7,8 @@ default_hooks = dict(
     # 12次保存一个模型checkpoint，最多保存3个
     checkpoint=dict(type='CheckpointHook', interval=12, max_keep_ckpts=3),
     sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(type='mmdet.DetVisualizationHook'))
+    visualization=dict(type='mmdet.DetVisualizationHook')
+)
 
 env_cfg = dict(
     cudnn_benchmark=False,
@@ -16,12 +17,12 @@ env_cfg = dict(
 )
 
 vis_backends = [dict(type='LocalVisBackend')]
-visualizer = dict(
-    type='RotLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+visualizer = dict(type='RotLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
 
 log_level = 'INFO'
 # 加载预训练模型权重
+# load_from = '/root/autodl-tmp/Dota1.0/train/work_dir/epoch_80.pth'
 load_from = None
 # 是否进行模型的断点恢复
 resume = False

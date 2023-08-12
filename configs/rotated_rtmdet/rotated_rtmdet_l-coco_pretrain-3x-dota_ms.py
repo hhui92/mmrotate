@@ -4,14 +4,15 @@ coco_ckpt = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_l_8xb
 
 model = dict(
     backbone=dict(
-        init_cfg=dict(
-            type='Pretrained', prefix='backbone.', checkpoint=coco_ckpt)),
+        init_cfg=dict(type='Pretrained', prefix='backbone.', checkpoint=coco_ckpt)
+    ),
     neck=dict(
-        init_cfg=dict(type='Pretrained', prefix='neck.',
-                      checkpoint=coco_ckpt)),
+        init_cfg=dict(type='Pretrained', prefix='neck.', checkpoint=coco_ckpt)
+    ),
     bbox_head=dict(
-        init_cfg=dict(
-            type='Pretrained', prefix='bbox_head.', checkpoint=coco_ckpt)))
+        init_cfg=dict(type='Pretrained', prefix='bbox_head.', checkpoint=coco_ckpt)
+    )
+)
 
 # batch_size = (2 GPUs) x (4 samples per GPU) = 8
-train_dataloader = dict(batch_size=4, num_workers=4)
+train_dataloader = dict(batch_size=8, num_workers=2)

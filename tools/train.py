@@ -12,24 +12,31 @@ from mmengine.runner import Runner
 
 from mmrotate.utils import register_all_modules
 
-#################################################################
-### 训练教程 http://www.xbhp.cn/news/28200.html###################
-### nohup python train.py > /mnt/Dota1.0/runlog/runlog 2>&1 & ##
-### nohup python train.py > /mnt/Dior/runlog/runlog 2>&1 &    ##
-################################################################
+#################################################################################
+### 训练教程 http://www.xbhp.cn/news/28200.html###################################
+### nohup python train.py > /mnt/Dota1.0/runlog/runlog.log 2>&1 &                  ##
+### nohup python train.py > /mnt/Dior/runlog/runlog 2>&1 &                     ##
+### nohup python train.py > /root/autodl-tmp/FAIR1M_ms/runlog/runlog.log 2>&1 &    ##
+#################################################################################
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
-    parser.add_argument('--config', default='/root/mmrotate/configs/rotated_rtmdet/rotated_rtmdet_l-100e-aug-dota.py', help='train config file path')
-    parser.add_argument('--work-dir', default='/mnt/Dota1.0/trainval/work_dir/', help='the dir to save logs and models')
+    # parser.add_argument('--config', default='/root/mmrotate/configs/rotated_rtmdet/rotated_rtmdet_l-coco_pretrain-3x-dota_ms.py', help='train config file path')
+    # parser.add_argument('--work-dir', default='/mnt/DOTA_ms/train/work_dir/', help='the dir to save logs and models')
 
     # parser.add_argument('--config', default='/root/mmrotate/configs/rotated_rtmdet/rotated_rtmdet_l-100e-aug-dior.py', help='train config file path')
     # parser.add_argument('--work-dir', default='/mnt/Dior/trainval/work_dir/', help='the dir to save logs and models')
 
+    parser.add_argument('--config', default='/root/mmrotate/configs/rotated_rtmdet/rotated_rtmdet_l-coco_pretrain-3x-fair1m_ms.py', help='train config file path')
+    parser.add_argument('--work-dir', default='/root/autodl-tmp/FAIR1M_ms/train/work_dir/', help='the dir to save logs and models')
+
+    # parser.add_argument('--seed', default=42)
+    # parser.add_argument('--deterministic', default=True)
     parser.add_argument('--amp', action='store_true', default=False,
         help='enable automatic-mixed-precision training')
     parser.add_argument('--auto-scale-lr', action='store_true', help='enable automatically scaling LR.')
+    # action='store_true'的默认值为False, 要想继续之前的训练需要将default设为True,此处的参数优先级最高，会覆盖掉配置文件中的参数值
     parser.add_argument('--resume', action='store_true',
         help='resume from the latest checkpoint in the work_dir automatically')
     parser.add_argument('--cfg-options', nargs='+', action=DictAction,
@@ -39,8 +46,7 @@ def parse_args():
         'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
         'Note that the quotation marks are necessary and that no white space '
         'is allowed.')
-    parser.add_argument('--launcher',
-        choices=['none', 'pytorch', 'slurm', 'mpi'],
+    parser.add_argument('--launcher', choices=['none', 'pytorch', 'slurm', 'mpi'],
         default='none', help='job launcher')
     # When using PyTorch version >= 2.0.0, the `torch.distributed.launch`
     # will pass the `--local-rank` parameter to `tools/train.py` instead

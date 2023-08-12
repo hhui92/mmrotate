@@ -27,9 +27,9 @@ except ImportError:
     shgeo = None
 
 
-def add_parser(parser):
+def add_parser(parser, path):
     """Add arguments."""
-    parser.add_argument('--base-json', type=str, default=r'D:\WorkSpace\NerualNet\program\mmrotate\tools\data\dota\split\split_configs\ss_train.json',
+    parser.add_argument('--base-json', type=str, default=path,
         help='json config file for split images')
     parser.add_argument('--nproc', type=int, default=2, help='the procession number')
 
@@ -62,10 +62,10 @@ def add_parser(parser):
         help='the extension of saving images')
 
 
-def parse_args():
+def parse_args(path):
     """Parse arguments."""
     parser = argparse.ArgumentParser(description='Splitting images')
-    add_parser(parser)
+    add_parser(parser, path)
     args = parser.parse_args()
 
     if args.base_json is not None:
@@ -478,9 +478,9 @@ def _load_dota_txt(txtfile):
     return dict(gsd=gsd, ann=ann)
 
 
-def main():
+def main(path):
     """Main function of image split."""
-    args = parse_args()
+    args = parse_args(path)
 
     if args.ann_dirs is None:
         args.ann_dirs = [None for _ in range(len(args.img_dirs))]
@@ -536,4 +536,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    lst = ['D:\\WorkSpace\\NerualNet\\program\\mmrotate\\tools\\data\\dota\\split\\split_configs\\ms_train.json',
+           'D:\\WorkSpace\\NerualNet\\program\\mmrotate\\tools\\data\\dota\\split\\split_configs\\ms_val.json',
+           'D:\\WorkSpace\\NerualNet\\program\\mmrotate\\tools\\data\\dota\\split\\split_configs\\ms_test.json']
+    for path in lst:
+        main(path)

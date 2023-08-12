@@ -1,6 +1,6 @@
 # dataset settings 此值用来设置Dotav1.0/1.5/2.0
 dataset_type = 'DOTADataset'
-data_root = '/mnt/Dota1.0/'
+data_root = '/root/autodl-tmp/Dota1.0/'
 
 backend_args = None
 img_scale = (1024, 1024)
@@ -89,7 +89,6 @@ test_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         data_prefix=dict(img_path='test/images/'),
-        img_shape=(1024, 1024),
         test_mode=True,
         pipeline=test_pipeline))
 # 该字典中参数type表示使用mmrotate/evaluation/metrics/dota_metric.py，且传递的参数为format_only、merge_patches和outfile_prefix
@@ -98,4 +97,4 @@ test_evaluator = dict(
     type='DOTAMetric',
     format_only=True,
     merge_patches=True,
-    outfile_prefix='/mnt/Dota1.0/test/predict/task1')
+    outfile_prefix='/root/autodl-tmp/Dota1.0/test/predict/task1')
