@@ -4,7 +4,7 @@ _base_ = [
     './_base_/fair1m.py'
 ]
 
-coco_ckpt = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_l_8xb32-300e_coco/rtmdet_l_8xb32-300e_coco_20220719_112030-5a0be7c4.pth'  # noqa
+checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth'  # noqa
 
 angle_version = 'le90'
 model = dict(
@@ -19,23 +19,23 @@ model = dict(
     backbone=dict(
         type='mmdet.CSPNeXt',
         arch='P5',
+        out_indices=(1, 2, 3, 4),
         expand_ratio=0.5,
         deepen_factor=1,
         widen_factor=1,
         channel_attention=True,
         norm_cfg=dict(type='SyncBN'),
         act_cfg=dict(type='SiLU'),
-        init_cfg=dict(type='Pretrained', prefix='backbone.', checkpoint=coco_ckpt)
+        init_cfg=dict(type='Pretrained', prefix='backbone.', checkpoint=checkpoint)
     ),
     neck=dict(
-        type='mmdet.CSPNeXtPAFPN',
-        in_channels=[256, 512, 1024],
+        type='NASCSPNeXtPAFPN',
+        in_channels=[128, 256, 512, 1024],
         out_channels=256,
         num_csp_blocks=3,
         expand_ratio=0.5,
         norm_cfg=dict(type='SyncBN'),
         act_cfg=dict(type='SiLU'),
-        init_cfg=dict(type='Pretrained', prefix='neck.', checkpoint=coco_ckpt)
     ),
     bbox_head=dict(
         type='RotatedRTMDetSepBNHead',
@@ -56,8 +56,7 @@ model = dict(
         scale_angle=False,
         loss_angle=None,
         norm_cfg=dict(type='SyncBN'),
-        act_cfg=dict(type='SiLU'),
-        init_cfg=dict(type='Pretrained', prefix='bbox_head.', checkpoint=coco_ckpt)
+        act_cfg=dict(type='SiLU')
     ),
     train_cfg=dict(
         assigner=dict(
@@ -76,15 +75,15 @@ model = dict(
 )
 
 # batch_size = (2 GPUs) x (4 samples per GPU) = 8
-train_dataloader = dict(batch_size=4, num_workers=8)
+train_dataloader = dict(batch_size=2, num_workers=1)
 max_epochs = 3 * 12
 base_lr = 0.004 / 16
-interval = 4  # 每隔4个epoch验证一次
+interval = 2  # 每隔4个epoch验证一次
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=max_epochs, val_interval=interval)
 
 default_hooks = dict(
     timer=dict(type='IterTimerHook'),
-    logger=dict(type='LoggerHook', interval=50), # 训练时日志打印间隔
+    logger=dict(type='LoggerHook', interval=50),
     param_scheduler=dict(type='ParamSchedulerHook'),
     # interval次保存一个模型checkpoint，最多保存max_epochs // interval个
     checkpoint=dict(type='CheckpointHook', interval=interval, max_keep_ckpts=max_epochs // interval),

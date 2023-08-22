@@ -3,6 +3,7 @@ _base_ = [
     './_base_/schedule_3x.py',
     './_base_/dota_rr_ms.py'
 ]
+
 checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth'  # noqa
 
 angle_version = 'le90'
@@ -18,6 +19,8 @@ model = dict(
     backbone=dict(
         type='mmdet.CSPNeXt',
         arch='P5',
+        # out_indices=(2, 3, 4),
+        out_indices=(1, 2, 3, 4),
         expand_ratio=0.5,
         deepen_factor=1,
         widen_factor=1,
@@ -26,8 +29,10 @@ model = dict(
         act_cfg=dict(type='SiLU'),
         init_cfg=dict(type='Pretrained', prefix='backbone.', checkpoint=checkpoint)),
     neck=dict(
-        type='mmdet.CSPNeXtPAFPN',
-        in_channels=[256, 512, 1024],
+        # type='mmdet.CSPNeXtPAFPN',
+        type='NASCSPNeXtPAFPN',
+        # 增加一个分支用于添加自定义的FTM模块
+        in_channels=[128, 256, 512, 1024],
         out_channels=256,
         num_csp_blocks=3,
         expand_ratio=0.5,
@@ -40,6 +45,7 @@ model = dict(
         stacked_convs=2,
         feat_channels=256,
         angle_version=angle_version,
+        # strides=[8, 16, 32] 描点框放置的步幅，若小目标较多可以试着增加个4、8、16、32、64，但是会带来计算量的增加，可试验测试
         anchor_generator=dict(type='mmdet.MlvlPointGenerator', offset=0, strides=[8, 16, 32]),
         bbox_coder=dict(type='DistanceAnglePointCoder', angle_version=angle_version),
         loss_cls=dict(
@@ -74,15 +80,15 @@ model = dict(
 )
 
 # batch_size = (2 GPUs) x (4 samples per GPU) = 8
-train_dataloader = dict(batch_size=4, num_workers=4)
+train_dataloader = dict(batch_size=2, num_workers=1)
 max_epochs = 3 * 12
 base_lr = 0.004 / 16
-interval = 4  # 每隔4个epoch验证一次
+interval = 2  # 每隔4个epoch验证一次
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=max_epochs, val_interval=interval)
 
 default_hooks = dict(
     timer=dict(type='IterTimerHook'),
-    logger=dict(type='LoggerHook', interval=50), # 训练时日志打印间隔
+    logger=dict(type='LoggerHook', interval=50),
     param_scheduler=dict(type='ParamSchedulerHook'),
     # interval次保存一个模型checkpoint，最多保存max_epochs // interval个
     checkpoint=dict(type='CheckpointHook', interval=interval, max_keep_ckpts=max_epochs // interval),

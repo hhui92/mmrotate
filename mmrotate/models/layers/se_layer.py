@@ -137,7 +137,7 @@ class DyReLU(BaseModule):
         return out
 
 
-@MODELS.register_module()
+# @MODELS.register_module()
 class ChannelAttention(BaseModule):
     """Channel attention Module.
 
@@ -163,3 +163,43 @@ class ChannelAttention(BaseModule):
         out = self.fc(out)
         out = self.act(out)
         return x * out
+
+
+# @MODELS.register_module()
+class SpatialAttention(BaseModule):
+    """Spatial attention Module."""
+
+    def __init__(self, init_cfg: OptMultiConfig = None) -> None:
+        super().__init__(init_cfg=init_cfg)
+        # 对输入特征图进行avg和max池化后再拼接，通道为2，输出时将两个通道用1x1的卷积核合为一个通道
+        self.conv = nn.Conv2d(2, 1, kernel_size=1, padding=0)
+        if digit_version(torch.__version__) < (1, 7, 0):
+            self.act = nn.Hardsigmoid()
+        else:
+            self.act = nn.Hardsigmoid(inplace=True)
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward function for ChannelAttention."""
+        with torch.cuda.amp.autocast(enabled=False):
+            max_out, _ = torch.max(x, dim=1, keepdim=True)
+            avg_out = torch.mean(x, dim=1, keepdim=True)
+            concat_out = torch.cat([max_out, avg_out], dim=1)
+        spatial_att = self.conv(concat_out)
+        spatial_att = self.act(spatial_att)
+        out = x * spatial_att
+        return out
+
+
+# @MODELS.register_module()
+class HybridAttention(BaseModule):
+    """混合注意力（将通道注意力和空间注意力混合在一起）"""
+
+    def __init__(self, channels: int, init_cfg: OptMultiConfig = None):
+        super().__init__(init_cfg=init_cfg)
+        self.channel_att = ChannelAttention(channels, init_cfg)
+        self.spatial_att = SpatialAttention(init_cfg)
+
+    def forward(self, x):
+        channel_out = self.channel_att(x)
+        spatial_out = self.spatial_att(channel_out)
+        return spatial_out

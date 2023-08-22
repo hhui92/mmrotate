@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'DIORRDataset'
-data_root = '/mnt/Dior/'
+data_root = '/root/autodl-tmp/DIOR/'
 backend_args = None
 
 img_scale = (800, 800)
@@ -51,8 +51,8 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='train/annfiles/',
-        data_prefix=dict(img_path='train/images/'),
+        ann_file='trainval/annfiles/',
+        data_prefix=dict(img_path='trainval/images/'),
         filter_cfg=dict(filter_empty_gt=True),
         pipeline=train_pipeline
     )
@@ -67,16 +67,16 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='val/annfiles/',
-        data_prefix=dict(img_path='val/images/'),
+        ann_file='trainval/annfiles/',
+        data_prefix=dict(img_path='trainval/images/'),
         test_mode=True,
         pipeline=val_pipeline
     )
 )
 
 test_dataloader = dict(
-    batch_size=6,
-    num_workers=2,
+    batch_size=8,
+    num_workers=3,
     persistent_workers=False,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),

@@ -5,11 +5,10 @@ from mmcv.cnn import ConvModule, DepthwiseSeparableConvModule
 from mmengine.model import BaseModule
 from torch import Tensor
 from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
-from .se_layer import ChannelAttention
+from .se_layer import HybridAttention, ChannelAttention
 from mmrotate.registry import MODELS
 
 
-@MODELS.register_module()
 class DarknetBottleneck(BaseModule):
     """The basic bottleneck block used in Darknet.
 
@@ -65,8 +64,7 @@ class DarknetBottleneck(BaseModule):
             conv_cfg=conv_cfg,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
-        self.add_identity = \
-            add_identity and in_channels == out_channels
+        self.add_identity = add_identity and in_channels == out_channels
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward function."""
@@ -80,7 +78,6 @@ class DarknetBottleneck(BaseModule):
             return out
 
 
-@MODELS.register_module()
 class CSPNeXtBlock(BaseModule):
     """The basic bottleneck block used in CSPNeXt.
 
@@ -113,8 +110,7 @@ class CSPNeXtBlock(BaseModule):
                  use_depthwise: bool = False,
                  kernel_size: int = 5,
                  conv_cfg: OptConfigType = None,
-                 norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.03, eps=0.001),
+                 norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU'),
                  init_cfg: OptMultiConfig = None) -> None:
         super().__init__(init_cfg=init_cfg)
@@ -137,8 +133,7 @@ class CSPNeXtBlock(BaseModule):
             conv_cfg=conv_cfg,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
-        self.add_identity = \
-            add_identity and in_channels == out_channels
+        self.add_identity = add_identity and in_channels == out_channels
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward function."""
@@ -168,7 +163,7 @@ class CSPLayer(BaseModule):
             Defaults to False.
         use_depthwise (bool): Whether to use depthwise separable convolution in
             blocks. Defaults to False.
-        channel_attention (bool): Whether to add channel attention in each
+        hybrid_attention (bool): Whether to add channel attention in each
             stage. Defaults to True.
         conv_cfg (dict, optional): Config dict for convolution layer.
             Defaults to None, which means using conv2d.
@@ -189,16 +184,15 @@ class CSPLayer(BaseModule):
                  add_identity: bool = True,
                  use_depthwise: bool = False,
                  use_cspnext_block: bool = False,
-                 channel_attention: bool = False,
+                 hybrid_attention: bool = True,
                  conv_cfg: OptConfigType = None,
-                 norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.03, eps=0.001),
+                 norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='Swish'),
                  init_cfg: OptMultiConfig = None) -> None:
         super().__init__(init_cfg=init_cfg)
         block = CSPNeXtBlock if use_cspnext_block else DarknetBottleneck
         mid_channels = int(out_channels * expand_ratio)
-        self.channel_attention = channel_attention
+        self.hybrid_attention = hybrid_attention
         self.main_conv = ConvModule(
             in_channels,
             mid_channels,
@@ -232,7 +226,8 @@ class CSPLayer(BaseModule):
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg) for _ in range(num_blocks)
         ])
-        if channel_attention:
+        if hybrid_attention:
+            # self.attention = HybridAttention(2 * mid_channels)
             self.attention = ChannelAttention(2 * mid_channels)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -244,6 +239,6 @@ class CSPLayer(BaseModule):
 
         x_final = torch.cat((x_main, x_short), dim=1)
 
-        if self.channel_attention:
+        if self.hybrid_attention:
             x_final = self.attention(x_final)
         return self.final_conv(x_final)

@@ -713,8 +713,7 @@ class RotatedRTMDetSepBNHead(RotatedRTMDetHead):
                  **kwargs) -> None:
         self.share_conv = share_conv
         self.exp_on_reg = exp_on_reg
-        assert scale_angle is False, \
-            'scale_angle does not support in RotatedRTMDetSepBNHead'
+        assert scale_angle is False, 'scale_angle does not support in RotatedRTMDetSepBNHead'
         super().__init__(
             num_classes,
             in_channels,
@@ -802,8 +801,7 @@ class RotatedRTMDetSepBNHead(RotatedRTMDetHead):
             if is_norm(m):
                 constant_init(m, 1)
         bias_cls = bias_init_with_prob(0.01)
-        for rtm_cls, rtm_reg, rtm_ang in zip(self.rtm_cls, self.rtm_reg,
-                                             self.rtm_ang):
+        for rtm_cls, rtm_reg, rtm_ang in zip(self.rtm_cls, self.rtm_reg, self.rtm_ang):
             normal_init(rtm_cls, std=0.01, bias=bias_cls)
             normal_init(rtm_reg, std=0.01)
             normal_init(rtm_ang, std=0.01)

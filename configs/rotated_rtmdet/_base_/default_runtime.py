@@ -22,8 +22,8 @@ log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
 
 log_level = 'INFO'
 # 加载预训练模型权重
-# load_from = '/root/autodl-tmp/Dota1.0/train/work_dir/epoch_80.pth'
-load_from = None
+# load_from = '/root/autodl-tmp/DIOR/trainval/work_dir/epoch_25.pth'
+# load_from = None
 # 是否进行模型的断点恢复
 resume = False
 

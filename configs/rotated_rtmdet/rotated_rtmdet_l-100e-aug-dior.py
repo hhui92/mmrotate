@@ -5,9 +5,7 @@ _base_ = [
     './_base_/dior_rr.py'
 ]
 
-# 根据标注文件生成的类别名
-
-checkpoint = '/mnt/checkpoint/rotated_rtmdet_l-3x-dota-23992372.pth'  # noqa
+checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth'  # noqa
 
 backend_args = None
 
@@ -26,6 +24,7 @@ model = dict(
     backbone=dict(
         type='mmdet.CSPNeXt',
         arch='P5',
+        out_indices=(1, 2, 3, 4),
         expand_ratio=0.5,
         deepen_factor=1,
         widen_factor=1,
@@ -35,8 +34,8 @@ model = dict(
         init_cfg=dict(
             type='Pretrained', prefix='backbone.', checkpoint=checkpoint)),
     neck=dict(
-        type='mmdet.CSPNeXtPAFPN',
-        in_channels=[256, 512, 1024],
+        type='NASCSPNeXtPAFPN',
+        in_channels=[128, 256, 512, 1024],
         out_channels=256,
         num_csp_blocks=3,
         expand_ratio=0.5,
@@ -49,10 +48,8 @@ model = dict(
         stacked_convs=2,
         feat_channels=256,
         angle_version=angle_version,
-        anchor_generator=dict(
-            type='mmdet.MlvlPointGenerator', offset=0, strides=[8, 16, 32]),
-        bbox_coder=dict(
-            type='DistanceAnglePointCoder', angle_version=angle_version),
+        anchor_generator=dict(type='mmdet.MlvlPointGenerator', offset=0, strides=[4, 8, 16, 32]),
+        bbox_coder=dict(type='DistanceAnglePointCoder', angle_version=angle_version),
         loss_cls=dict(
             type='mmdet.QualityFocalLoss',
             use_sigmoid=True,
@@ -147,8 +144,8 @@ train_pipeline_stage2 = [
 
 # batch_size = (2 GPUs) x (4 samples per GPU) = 8
 train_dataloader = dict(
-    batch_size=8,
-    num_workers=8,
+    batch_size=4,
+    num_workers=2,
     dataset=dict(
         # 删除原先字典内容
         # _delete_=True,
@@ -180,7 +177,7 @@ test_evaluator = dict(type='DOTAMetric', metric='mAP')
 max_epochs = 100
 stage2_num_epochs = 10
 base_lr = 0.004 / 16
-interval = 20
+interval = 1
 
 train_cfg = dict(max_epochs=max_epochs, val_interval=interval)
 

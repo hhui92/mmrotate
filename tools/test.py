@@ -16,28 +16,27 @@ from mmrotate.utils import register_all_modules
 def parse_args():
     parser = argparse.ArgumentParser(description='Test (and eval) a model')
 
-    parser.add_argument('--config', default='/root/mmrotate/configs/rotated_rtmdet/rotated_rtmdet_l-100e-aug-dota.py', help='test config file path')
-    parser.add_argument('--checkpoint', default='/mnt/Dota1.0/trainval/work_dir/epoch_100.pth', help='checkpoint file')
-    parser.add_argument('--work-dir', default='/mnt/Dota1.0/test/work_dir/',
-        help='the directory to save the file containing evaluation metrics')
-    parser.add_argument('--out', default='/mnt/Dota1.0/test/out/res.pkl', type=str,
-        help='dump predictions to a pickle file for offline evaluation')
-    # 此参数会将原图与绘制过标注信息的图合并成一张图然后保存在指定目录中
-    parser.add_argument('--show-dir', default='/mnt/Dota1.0/test/show_dir/',
-                        help='directory where painted images will be saved.If specified, it will be automatically saved to the work_dir/timestamp/show_dir')
-
-
-    # parser.add_argument('--config', default='/root/mmrotate/configs/rotated_rtmdet/rotated_rtmdet_l-100e-aug-dior.py', help='test config file path')
-    # parser.add_argument('--checkpoint', default='/mnt/Dior/trainval/work_dir/epoch_100.pth', help='checkpoint file')
-    # parser.add_argument('--work-dir', default='/mnt/Dior/test/work_dir/',
+    # parser.add_argument('--config', default='/root/mmrotate/configs/rotated_rtmdet/rotated_rtmdet_l-3x-dota_ms.py', help='test config file path')
+    # parser.add_argument('--checkpoint', default='/root/autodl-tmp/DOTA-v1.0/trainval/work_dir/epoch_36.pth', help='checkpoint file')
+    # parser.add_argument('--work-dir', default='/root/autodl-tmp/DOTA-v1.0/test/work_dir/',
     #     help='the directory to save the file containing evaluation metrics')
-    # parser.add_argument('--out', default='/mnt/Dior/test/out/res.pkl', type=str,
+    # parser.add_argument('--out', default='/root/autodl-tmp/DOTA-v1.0/test/out/res.pkl', type=str,
     #     help='dump predictions to a pickle file for offline evaluation')
     # # 此参数会将原图与绘制过标注信息的图合并成一张图然后保存在指定目录中
-    # parser.add_argument('--show-dir', default='/mnt/Dior/test/show_dir/',
-    #     help='directory where painted images will be saved.If specified, it will be automatically saved to the work_dir/timestamp/show_dir')
+    # parser.add_argument('--show-dir', default='/root/autodl-tmp/DOTA-v1.0/test/show_dir/',
+    #                     help='directory where painted images will be saved.If specified, it will be automatically saved to the work_dir/timestamp/show_dir')
 
-    # parser.add_argument('--config', default='/root/mmrotate/configs/rotated_rtmdet/rotated_rtmdet_l-coco_pretrain-3x-fair1m_ms.py',
+    parser.add_argument('--config', default='/root/mmrotate/configs/rotated_rtmdet/rotated_rtmdet_l-100e-aug-dior.py', help='test config file path')
+    parser.add_argument('--checkpoint', default='/mnt/Dior/trainval/work_dir/epoch_44.pth', help='checkpoint file')
+    parser.add_argument('--work-dir', default='/mnt/Dior/test/work_dir/',
+        help='the directory to save the file containing evaluation metrics')
+    parser.add_argument('--out', default='/mnt/Dior/test/out/res.pkl', type=str,
+        help='dump predictions to a pickle file for offline evaluation')
+    # 此参数会将原图与绘制过标注信息的图合并成一张图然后保存在指定目录中
+    parser.add_argument('--show-dir', default='/mnt/Dior/test/show_dir/',
+        help='directory where painted images will be saved.If specified, it will be automatically saved to the work_dir/timestamp/show_dir')
+
+    # parser.add_argument('--config', default='/root/mmrotate/configs/rotated_rtmdet/rotated_rtmdet_l-3x-fair1m_ms.py',
     #                     help='test config file path')
     # parser.add_argument('--checkpoint', default='/root/autodl-tmp/FAIR1M_ms/train/work_dir/epoch_36.pth', help='checkpoint file')
     # parser.add_argument('--work-dir', default='/root/autodl-tmp/FAIR1M_ms/test/work_dir/',

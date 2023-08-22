@@ -1,18 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="root@connect.beijinga.seetacloud.com:22580 password" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+    <option name="confirmBeforeUploading" value="false" />
     <serverData>
-      <paths name="root@hz-t3.matpool.com:26361 password">
+      <paths name="root@connect.beijinga.seetacloud.com:22580 password">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/pycharm_project_723" local="$PROJECT_DIR$" />
+            <mapping deploy="/root/autodl-tmp/workspace" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
-      <paths name="root@region-8.seetacloud.com:13158 password">
+      <paths name="root@connect.beijinga.seetacloud.com:40657 password">
         <serverdata>
           <mappings>
-            <mapping deploy="/root/mmrotate" local="$PROJECT_DIR$" />
+            <mapping deploy="/root/autodl-tmp/workspace" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@region-8.autodl.pro:15930 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/root/autodl-tmp/workspace" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@region-8.autodl.pro:15930 password (2)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/root/autodl-tmp/workspace" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

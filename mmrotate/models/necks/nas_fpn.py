@@ -1,4 +1,5 @@
 from mmengine.model import BaseModule
+from torch import Tensor
 from mmrotate.registry import MODELS
 from typing import Sequence, Tuple
 from mmdet.utils import ConfigType, OptMultiConfig
@@ -6,16 +7,34 @@ import math
 from mmcv.cnn import ConvModule, DepthwiseSeparableConvModule
 import torch
 import torch.nn as nn
-from ..layers import CSPLayer
-
+import torch.nn.functional as F
+from mmrotate.models.layers import CSPLayer
+from mmrotate.models.necks.ftm import FTM
 
 
 @MODELS.register_module()
-class NASFPN(BaseModule):
-    """
-    将CSPNeXtPAFPN的CSPLayer的卷积核换成空洞卷积试一下效果
-    实现DCFPN看下效果
-    用NAS搜索DCFPN和CSPNeXtPAFPN试下效果
+class NASCSPNeXtPAFPN(BaseModule):
+    """Path Aggregation Network with CSPNeXt blocks.
+
+    Args:
+        in_channels (Sequence[int]): Number of input channels per scale.
+        out_channels (int): Number of output channels (used at each scale)
+        num_csp_blocks (int): Number of bottlenecks in CSPLayer.
+            Defaults to 3.
+        use_depthwise (bool): Whether to use depthwise separable convolution in
+            blocks. Defaults to False.
+        expand_ratio (float): Ratio to adjust the number of channels of the
+            hidden layer. Default: 0.5
+        upsample_cfg (dict): Config dict for interpolate layer.
+            Default: `dict(scale_factor=2, mode='nearest')`
+        conv_cfg (dict, optional): Config dict for convolution layer.
+            Default: None, which means using conv2d.
+        norm_cfg (dict): Config dict for normalization layer.
+            Default: dict(type='BN')
+        act_cfg (dict): Config dict for activation layer.
+            Default: dict(type='Swish')
+        init_cfg (dict or list[dict], optional): Initialization config dict.
+            Default: None.
     """
 
     def __init__(
@@ -25,27 +44,19 @@ class NASFPN(BaseModule):
             num_csp_blocks: int = 3,
             use_depthwise: bool = False,
             expand_ratio: float = 0.5,
-            upsample_cfg: ConfigType = dict(scale_factor=2, mode='nearest'),
             conv_cfg: bool = None,
             norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg: ConfigType = dict(type='Swish'),
-            ## kaiming均匀初始化方法具体作用查一查
-            init_cfg: OptMultiConfig = dict(
-                type='Kaiming',
-                layer='Conv2d',
-                a=math.sqrt(5),
-                distribution='uniform',
-                mode='fan_in',
-                nonlinearity='leaky_relu')
+            init_cfg: OptMultiConfig = dict(type='Kaiming', layer='Conv2d', a=math.sqrt(5), distribution='uniform',
+                                            mode='fan_in', nonlinearity='leaky_relu')
     ) -> None:
-        super(NASFPN, self).__init__(init_cfg)
+        super().__init__(init_cfg)
         self.in_channels = in_channels
         self.out_channels = out_channels
-
+        # 配置文件没有传递该参数，因此使用的是ConvModule
         conv = DepthwiseSeparableConvModule if use_depthwise else ConvModule
 
-        # build top-down blocks
-        self.upsample = nn.Upsample(**upsample_cfg)
+        # 下降层 build top-down blocks
         self.reduce_layers = nn.ModuleList()
         self.top_down_blocks = nn.ModuleList()
         for idx in range(len(in_channels) - 1, 0, -1):
@@ -108,67 +119,77 @@ class NASFPN(BaseModule):
                     conv_cfg=conv_cfg,
                     norm_cfg=norm_cfg,
                     act_cfg=act_cfg))
+        # 在最底层引出一分支使用自己设计的FTM模型
+        self.ftm = FTM(in_channels[0], out_channels)
+        self.reduce_conv = ConvModule(in_channels=128, out_channels=512, kernel_size=8, stride=8)
+
+    def forward(self, inputs: Tuple[Tensor, ...]) -> Tuple[Tensor, ...]:
+        """
+        Args: inputs (tuple[Tensor]): input features.
+            [128 256 256
+            256 128 128
+            512 64 64
+            1024 32 32]
+        """
+
+        assert len(inputs) == len(self.in_channels)
+
+        # top-down path 顶---底进行上采样
+        inner_outs = [inputs[-1]]
+        for idx in range(len(self.in_channels) - 1, 0, -1):
+            feat_heigh = inner_outs[0]
+            feat_low = inputs[idx - 1]
+            feat_heigh = self.reduce_layers[len(self.in_channels) - 1 - idx](feat_heigh)
+            # # 增加跳连
+            # if idx == 3:
+            #     inner_outs[0] = feat_heigh + inputs[idx]
+            inner_outs[0] = feat_heigh
+            # 以下是王老师修改
+            # if idx == 1:
+            #     inner_outs[0] = self.ftm(feat_heigh)
+            # else:
+            #     inner_outs[0] = feat_heigh
+            inner_outs[0] = feat_heigh
+            upsample_feat = F.interpolate(feat_heigh, scale_factor=2, mode='nearest')
+
+            inner_out = self.top_down_blocks[len(self.in_channels) - 1 - idx](torch.cat([upsample_feat, feat_low], 1))
+            # 增加跳连
+            inner_out = inner_out + inputs[idx - 1]
+            inner_outs.insert(0, inner_out)
+
+        # 最上层替换为自己写的FTM模块，直接输出结果，然后将其下采样与其他层合并
+        # inner_outs[0] = self.ftm(inputs[0])
+
+        # outs[0]与outs[3]进行融合，缩短信息传递路径
+        reduce_co = self.reduce_conv(inputs[0])
+        inner_outs[3] = reduce_co + inner_outs[3]
+
+        # bottom-up path
+        outs = [inner_outs[0]]
+        for idx in range(len(self.in_channels) - 1):
+            feat_height = inner_outs[idx + 1]
+            feat_low = outs[-1]
+            downsample_feat = self.downsamples[idx](feat_low)
+            out = self.bottom_up_blocks[idx](torch.cat([downsample_feat, feat_height], 1))
+            outs.append(out)
+
+        # out convs
+        for idx, conv in enumerate(self.out_convs):
+            outs[idx] = conv(outs[idx])
+        return tuple(outs)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        super(NASFPN, self).__init__()
-        # 定义六层卷积层
-        # 两层HDC（1,2,5,1,2,5）
-        self.conv = nn.Sequential(
-            # 第一层 (3-1)*1+1=3 （64-3)/1 + 1 =62
-            nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=1, padding=0, dilation=1),
-            nn.BatchNorm2d(32),
-            # inplace-选择是否进行覆盖运算
-            nn.ReLU(inplace=True),
-            # 第二层 (3-1)*2+1=5 （62-5)/1 + 1 =58
-            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=1, padding=0, dilation=2),
-            nn.BatchNorm2d(32),
-            # inplace-选择是否进行覆盖运算
-            nn.ReLU(inplace=True),
-            # 第三层 (3-1)*5+1=11  (58-11)/1 +1=48
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=0, dilation=5),
-            nn.BatchNorm2d(64),
-            # inplace-选择是否进行覆盖运算
-            nn.ReLU(inplace=True),
-            # 第四层(3-1)*1+1=3 （48-3)/1 + 1 =46
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=0, dilation=1),
-            nn.BatchNorm2d(64),
-            # inplace-选择是否进行覆盖运算
-            nn.ReLU(inplace=True),
-            # 第五层 (3-1)*2+1=5 （46-5)/1 + 1 =42
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=0, dilation=2),
-            nn.BatchNorm2d(64),
-            # inplace-选择是否进行覆盖运算
-            nn.ReLU(inplace=True),
-            # 第六层 (3-1)*5+1=11  (42-11)/1 +1=32
-            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=0, dilation=5),
-            nn.BatchNorm2d(128),
-            # inplace-选择是否进行覆盖运算
-            nn.ReLU(inplace=True)
-        )
-        # 输出层,将通道数变为分类数量
-        self.fc = nn.Linear(128, num_classes)
-
-    def forward(self, x):
-        # 图片经过三层卷积，输出维度变为(batch_size,C_out,H,W)
-        out = self.conv(x)
-        # 使用平均池化层将图片的大小变为1x1,第二个参数为最后输出的长和宽（这里默认相等了）
-        out = F.avg_pool2d(out, 32)
-        # 将张量out从shape batchx128x1x1 变为 batch x128
-        out = out.squeeze()
-        # 输入到全连接层将输出的维度变为3
-        out = self.fc(out)
-        return out
+# in_channels = [128, 256, 512, 1024]
+# out_channels = 256
+# num_csp_blocks = 3
+# expand_ratio = 0.5
+# # norm_cfg = dict(type='SyncBN')
+# act_cfg = dict(type='SiLU')
+# t1 = torch.randn(2, 128, 256, 256)
+# t2 = torch.randn(2, 256, 128, 128)
+# t3 = torch.randn(2, 512, 64, 64)
+# t4 = torch.randn(2, 1024, 32, 32)
+# t = (t1, t2, t3, t4)
+# model = NASCSPNeXtPAFPN(in_channels, out_channels, num_csp_blocks, act_cfg=act_cfg)
+# m = model(t)
+# print(len(m))

@@ -29,12 +29,6 @@ class FAIR1MDataset(BaseDataset):
              'Bus', 'Tugboat', 'Tennis-Court', 'Baseball-Field', 'other-vehicle', 'Truck-Tractor', 'Fishing-Boat',
              'other-ship', 'ARJ21', 'Boeing737', 'Boeing747', 'Boeing787', 'A330', 'Football-Field', 'Basketball-Court',
              'Boeing777', 'Roundabout', 'Warship', 'C919', 'Tractor', 'A350', 'Trailer'),
-
-        # ('Boeing-737', 'Boeing-777', 'Boeing-747', 'Boeing-787', 'Airbus-A320', 'Airbus-A220', 'Airbus-A330',
-        #  'Airbus-A350', 'COMAC-C919', 'COMAC-ARJ21', 'liquid-cargo-ships', 'dry-cargo-ships', 'motorboat',
-        #  'fishing-boat', 'passenger-ship', 'tugboat', 'engineering-ship', 'warship', 'small-car', 'bus',
-        #  'Cargo-Truck', 'dump-truck', 'van', 'trailer', 'tractor', 'excavator', 'truck-tractor', 'basketball-court',
-        #  'tennis-court', 'football-field', 'baseball-field', 'intersection', 'roundabout', 'bridge'),
         # palette is a list of color tuples, which is used for visualization.
 
         'palette': [(229, 22, 22), (229, 56, 22), (229, 89, 22), (229, 123, 22), (229, 156, 22), (229, 190, 22),

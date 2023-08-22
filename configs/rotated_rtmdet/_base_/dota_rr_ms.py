@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'DOTADataset'
-data_root = '/mnt/DOTA_ms/'
+data_root = '/root/autodl-tmp/DOTA-v1.0/'
 backend_args = None
 
 train_pipeline = [
@@ -56,21 +56,21 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='train/annfiles/',
-        data_prefix=dict(img_path='train/images/'),
+        ann_file='trainval/annfiles/',
+        data_prefix=dict(img_path='trainval/images/'),
         filter_cfg=dict(filter_empty_gt=True),
         pipeline=train_pipeline))
 val_dataloader = dict(
-    batch_size=5,
-    num_workers=2,
+    batch_size=2,
+    num_workers=1,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='val/annfiles/',
-        data_prefix=dict(img_path='val/images/'),
+        ann_file='trainval/annfiles/',
+        data_prefix=dict(img_path='trainval/images/'),
         test_mode=True,
         pipeline=val_pipeline))
 
@@ -94,4 +94,4 @@ test_evaluator = dict(
     type='DOTAMetric',
     format_only=True,
     merge_patches=True,
-    outfile_prefix='/mnt/DOTA_ms/test/predict/task1')
+    outfile_prefix='/root/autodl-tmp/DOTA-v1.0/test/predict/task1')
