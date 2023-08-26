@@ -140,43 +140,44 @@ class DyReLU(BaseModule):
 # @MODELS.register_module()
 class ChannelAttention(BaseModule):
     """Channel attention Module.
-
-    Args:
-        channels (int): The input (and output) channels of the attention layer.
-        init_cfg (dict or list[dict], optional): Initialization config dict.
-            Defaults to None
     """
 
     def __init__(self, channels: int, init_cfg: OptMultiConfig = None) -> None:
-        super().__init__(init_cfg=init_cfg)
-        self.global_avgpool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Conv2d(channels, channels, 1, 1, 0, bias=True)
+        super(ChannelAttention, self).__init__(init_cfg=init_cfg)
+        # 平均池化
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        # 最大池化
+        self.max_pool = nn.AdaptiveMaxPool2d(1)
+
+        self.fc1 = nn.Conv2d(channels, channels // 16, 1, bias=True)
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Conv2d(channels // 16, channels, 1, bias=True)
         if digit_version(torch.__version__) < (1, 7, 0):
-            self.act = nn.Hardsigmoid()
+            self.active = nn.Hardsigmoid()
         else:
-            self.act = nn.Hardsigmoid(inplace=True)
+            self.active = nn.Hardsigmoid(inplace=True)
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward function for ChannelAttention."""
         with torch.cuda.amp.autocast(enabled=False):
-            out = self.global_avgpool(x)
-        out = self.fc(out)
-        out = self.act(out)
+            avg_out = self.fc2(self.relu1(self.fc1(self.avg_pool(x))))
+            max_out = self.fc2(self.relu1(self.fc1(self.max_pool(x))))
+            out = avg_out + max_out
+        out = self.active(out)
         return x * out
 
 
-# @MODELS.register_module()
 class SpatialAttention(BaseModule):
     """Spatial attention Module."""
 
     def __init__(self, init_cfg: OptMultiConfig = None) -> None:
-        super().__init__(init_cfg=init_cfg)
-        # 对输入特征图进行avg和max池化后再拼接，通道为2，输出时将两个通道用1x1的卷积核合为一个通道
-        self.conv = nn.Conv2d(2, 1, kernel_size=1, padding=0)
+        super(SpatialAttention, self).__init__(init_cfg=init_cfg)
+        # 对输入特征图进行avg和max池化后再拼接，通道为2，输出时将两个通道用7x7的卷积核合为一个通道
+        self.conv = nn.Conv2d(2, 1, kernel_size=7, padding=3)
         if digit_version(torch.__version__) < (1, 7, 0):
-            self.act = nn.Hardsigmoid()
+            self.activate = nn.Hardsigmoid()
         else:
-            self.act = nn.Hardsigmoid(inplace=True)
+            self.activate = nn.Hardsigmoid(inplace=True)
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward function for ChannelAttention."""
@@ -185,7 +186,7 @@ class SpatialAttention(BaseModule):
             avg_out = torch.mean(x, dim=1, keepdim=True)
             concat_out = torch.cat([max_out, avg_out], dim=1)
         spatial_att = self.conv(concat_out)
-        spatial_att = self.act(spatial_att)
+        spatial_att = self.activate(spatial_att)
         out = x * spatial_att
         return out
 
@@ -200,6 +201,6 @@ class HybridAttention(BaseModule):
         self.spatial_att = SpatialAttention(init_cfg)
 
     def forward(self, x):
-        channel_out = self.channel_att(x)
-        spatial_out = self.spatial_att(channel_out)
-        return spatial_out
+        out = self.channel_att(x)
+        out = self.spatial_att(out)
+        return out

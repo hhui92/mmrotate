@@ -227,8 +227,7 @@ class CSPLayer(BaseModule):
                 act_cfg=act_cfg) for _ in range(num_blocks)
         ])
         if hybrid_attention:
-            # self.attention = HybridAttention(2 * mid_channels)
-            self.attention = ChannelAttention(2 * mid_channels)
+            self.attention = HybridAttention(2 * mid_channels)
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward function."""

@@ -24,7 +24,7 @@ model = dict(
     backbone=dict(
         type='mmdet.CSPNeXt',
         arch='P5',
-        out_indices=(1, 2, 3, 4),
+        out_indices=(2, 3, 4),
         expand_ratio=0.5,
         deepen_factor=1,
         widen_factor=1,
@@ -35,7 +35,7 @@ model = dict(
             type='Pretrained', prefix='backbone.', checkpoint=checkpoint)),
     neck=dict(
         type='NASCSPNeXtPAFPN',
-        in_channels=[128, 256, 512, 1024],
+        in_channels=[256, 512, 1024],
         out_channels=256,
         num_csp_blocks=3,
         expand_ratio=0.5,
@@ -48,7 +48,7 @@ model = dict(
         stacked_convs=2,
         feat_channels=256,
         angle_version=angle_version,
-        anchor_generator=dict(type='mmdet.MlvlPointGenerator', offset=0, strides=[4, 8, 16, 32]),
+        anchor_generator=dict(type='mmdet.MlvlPointGenerator', offset=0, strides=[8, 16, 32]),
         bbox_coder=dict(type='DistanceAnglePointCoder', angle_version=angle_version),
         loss_cls=dict(
             type='mmdet.QualityFocalLoss',
@@ -169,15 +169,15 @@ val_pipeline = [
 
 val_dataloader = dict(batch_size=6, num_workers=2, dataset=dict(pipeline=val_pipeline))
 
-test_dataloader = dict(batch_size=10, num_workers=8)
+test_dataloader = dict(batch_size=6, num_workers=2)
 
 val_evaluator = dict(type='DOTAMetric', metric='mAP')
 test_evaluator = dict(type='DOTAMetric', metric='mAP')
 
-max_epochs = 100
+max_epochs = 50
 stage2_num_epochs = 10
 base_lr = 0.004 / 16
-interval = 1
+interval = 2
 
 train_cfg = dict(max_epochs=max_epochs, val_interval=interval)
 

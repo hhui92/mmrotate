@@ -119,9 +119,9 @@ class NASCSPNeXtPAFPN(BaseModule):
                     conv_cfg=conv_cfg,
                     norm_cfg=norm_cfg,
                     act_cfg=act_cfg))
-        # 在最底层引出一分支使用自己设计的FTM模型
-        self.ftm = FTM(in_channels[0], out_channels)
-        self.reduce_conv = ConvModule(in_channels=128, out_channels=512, kernel_size=8, stride=8)
+        # 在大特征图上引出一分支使用自己设计的FTM模型提取丰富的特征信息
+        self.ftm = FTM(in_channels[0])
+        self.reduce_conv = ConvModule(in_channels=256, out_channels=512, kernel_size=4, stride=4)
 
     def forward(self, inputs: Tuple[Tensor, ...]) -> Tuple[Tensor, ...]:
         """
@@ -134,35 +134,37 @@ class NASCSPNeXtPAFPN(BaseModule):
 
         assert len(inputs) == len(self.in_channels)
 
-        # top-down path 顶---底进行上采样
+        # top-down path 小图---大图进行上采样
         inner_outs = [inputs[-1]]
         for idx in range(len(self.in_channels) - 1, 0, -1):
             feat_heigh = inner_outs[0]
-            feat_low = inputs[idx - 1]
+            if idx == 1:
+                feat_low = self.ftm(inputs[idx - 1])
+            else:
+                feat_low = inputs[idx - 1]
             feat_heigh = self.reduce_layers[len(self.in_channels) - 1 - idx](feat_heigh)
             # # 增加跳连
             # if idx == 3:
             #     inner_outs[0] = feat_heigh + inputs[idx]
             inner_outs[0] = feat_heigh
-            # 以下是王老师修改
-            # if idx == 1:
-            #     inner_outs[0] = self.ftm(feat_heigh)
-            # else:
-            #     inner_outs[0] = feat_heigh
-            inner_outs[0] = feat_heigh
+
             upsample_feat = F.interpolate(feat_heigh, scale_factor=2, mode='nearest')
 
             inner_out = self.top_down_blocks[len(self.in_channels) - 1 - idx](torch.cat([upsample_feat, feat_low], 1))
             # 增加跳连
-            inner_out = inner_out + inputs[idx - 1]
+            if idx == 1:
+                inner_out = inner_out + feat_low
+            else:
+                inner_out = inner_out + inputs[idx - 1]
             inner_outs.insert(0, inner_out)
 
-        # 最上层替换为自己写的FTM模块，直接输出结果，然后将其下采样与其他层合并
-        # inner_outs[0] = self.ftm(inputs[0])
+        # 最上层替换为自己写的FTM模块，直接输出结果，然后将其下采样与其他层合并 经验证效果并没有很好70.1%
+        # ftm = self.ftm(inputs[0])
+        # inner_outs[0] = inner_outs[0] + ftm
 
         # outs[0]与outs[3]进行融合，缩短信息传递路径
         reduce_co = self.reduce_conv(inputs[0])
-        inner_outs[3] = reduce_co + inner_outs[3]
+        inner_outs[-1] = reduce_co + inner_outs[-1]
 
         # bottom-up path
         outs = [inner_outs[0]]
@@ -173,23 +175,27 @@ class NASCSPNeXtPAFPN(BaseModule):
             out = self.bottom_up_blocks[idx](torch.cat([downsample_feat, feat_height], 1))
             outs.append(out)
 
+        # 增加跳连
+        for idx in range(len(self.in_channels)):
+            outs[idx] = outs[idx] + inputs[idx]
+
         # out convs
         for idx, conv in enumerate(self.out_convs):
             outs[idx] = conv(outs[idx])
         return tuple(outs)
 
 
-# in_channels = [128, 256, 512, 1024]
+# in_channels = [256, 512, 1024]
 # out_channels = 256
 # num_csp_blocks = 3
 # expand_ratio = 0.5
 # # norm_cfg = dict(type='SyncBN')
 # act_cfg = dict(type='SiLU')
-# t1 = torch.randn(2, 128, 256, 256)
-# t2 = torch.randn(2, 256, 128, 128)
-# t3 = torch.randn(2, 512, 64, 64)
-# t4 = torch.randn(2, 1024, 32, 32)
-# t = (t1, t2, t3, t4)
+# # t1 = torch.randn(2, 128, 256, 256)
+# t2 = torch.randn(2, 256, 100, 100)
+# t3 = torch.randn(2, 512, 50, 50)
+# t4 = torch.randn(2, 1024, 25, 25)
+# t = (t2, t3, t4)
 # model = NASCSPNeXtPAFPN(in_channels, out_channels, num_csp_blocks, act_cfg=act_cfg)
 # m = model(t)
 # print(len(m))

@@ -705,8 +705,7 @@ class RotatedRTMDetSepBNHead(RotatedRTMDetHead):
                  in_channels: int,
                  share_conv: bool = True,
                  scale_angle: bool = False,
-                 norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.03, eps=0.001),
+                 norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU'),
                  pred_kernel_size: int = 1,
                  exp_on_reg: bool = False,

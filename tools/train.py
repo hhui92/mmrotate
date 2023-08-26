@@ -9,12 +9,13 @@ from mmengine.registry import RUNNERS
 from mmengine.runner import Runner
 from mmrotate.utils import register_all_modules
 
-#################################################################################
-### 训练教程 http://www.xbhp.cn/news/28200.html###################################
-### nohup python train.py > /mnt/DOTA_ms/runlog/runlog.log 2>&1 &              ##
-### nohup python train.py > /root/autodl-tmp/DIOR/runlog/runlog.log 2>&1 &    ##
-### nohup python train.py > /root/autodl-tmp/FAIR1M_ms/runlog/runlog.log 2>&1 &##
-#################################################################################
+
+"""
+训练教程 http://www.xbhp.cn/news/28200.html
+nohup python train.py > /root/autodl-tmp/DOTA_ms/runlog/runlog.log 2>&1 & 
+nohup python train.py > /root/autodl-tmp/DIOR/runlog/runlog.log 2>&1 & 
+nohup python train.py > /root/autodl-tmp/FAIR1M_ms/runlog/runlog.log 2>&1 & 
+"""
 
 
 def parse_args():
